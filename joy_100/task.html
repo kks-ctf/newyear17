@@ -1,0 +1,255 @@
+<HTML><head><title>Javascript Picross</title><style>
+TABLE.maintable		{border:5px solid #FF4477;padding:10px;}
+TABLE.maintablewin	{border:5px solid #447744;padding:10px;}
+TD.topnums TD		{width:30px;background:#EEEEEE;border-left:1px solid #222222;border-right:1px solid #222222;text-align:center;vertical-align:bottom;}
+TD.sidenums TD		{height:32px;background:#EEEEEE;border-top:1px solid #222222;border-bottom:1px solid #222222;text-align:right;vertical-align:middle;}
+			 /* Why THE HELL does thirty-TWO make it look right (in Fx) here? */
+TD.maintds TD		{border:1px solid #222222;}
+TD TD.line_t		{border-top:2px solid blue;}
+TD TD.line_b		{border-bottom:2px solid blue;}
+TD.sidenums TD.line_t	{height:33px;}  /* These rules were optimized for Firefox :) */
+TD.sidenums TD.line_b	{height:33px;} /* They might look bad in other browsers :(  */
+TD TD.line_l		{border-left:2px solid blue;}
+TD TD.line_r		{border-right:2px solid blue;}
+TD TD.line_tl		{border-top:2px solid blue;border-left:2px solid blue;}
+TD TD.line_tr		{border-top:2px solid blue;border-right:2px solid blue;}
+TD TD.line_bl		{border-bottom:2px solid blue;border-left:2px solid blue;}
+TD TD.line_br		{border-bottom:2px solid blue;border-right:2px solid blue;}
+TD TD.line_tlr		{border-top:2px solid blue;border-left:2px solid blue;border-right:2px solid blue;}
+TD TD.line_blr		{border-bottom:2px solid blue;border-left:2px solid blue;border-right:2px solid blue;}
+TD TD.line_tbl		{border-top:2px solid blue;border-bottom:2px solid blue;border-left:2px solid blue;}
+TD TD.line_tbr		{border-top:2px solid blue;border-bottom:2px solid blue;border-right:2px solid blue;}
+/* DAMN that's messy.  Maybe I'll do something else.  Maybe... */
+TD.maintds DIV		{width:30px;height:30px;}
+TD.maintds DIV.unk	{background:white;}
+TD.maintds DIV.yes	{background:black;}
+TD.maintds DIV.no	{background:#BBBBBB;}
+.strike			{cursor:crosshair;border-right:1px solid #666666;border-left:1px solid #666666;color:#666666;text-decoration:overline underline;}
+.nostrike		{cursor:crosshair;border-right:1px solid #EEEEEE;border-left:1px solid #EEEEEE;}
+</style></head><body bgcolor="lightblue" onLoad="playball();">
+<br><center>Click to mark a square as filled, shift-click to mark a square as empty.<br>Also, you can click and drag.<br>
+<table id="maintable" class="maintable"><tr><td>
+<table border="0px" cellpadding="0px" cellspacing="0px">
+  <tr>
+    <td id="statustd">This Picross is done via Javascript.
+      Consequently, if your browser can't handle the Javascript used, this won't work.
+      <br><br>Signs to look for are...well...this.
+      If this page has fully loaded, and you still see this message, it probably ain't gunna happen.
+      <br><br>Sorry.</td>
+    <td class="topnums" id="topnums"></td>
+  </tr><tr>
+    <td class="sidenums" id="sidenums"></td>
+    <td class="maintds" id="maintds"></td>
+  </tr>
+</table></td></tr></table>
+<br><br><div id="victorydiv" style="display:none">
+<h1><font color="#888800">Victory is yours!</font></h1>
+<br>Refresh to play this puzzle again,<br>or go back and choose another.
+<br><br><br><font size="-7">Or, you know, go do something else.<br>I'm not trying to insist that you waste your life here.</font>
+</div></center>
+<script>
+mypuzzle=new Array();
+userpuzzle=new Array();
+mynums=new Array();
+trueshiftdown=false;shiftdown=false;
+mouseisdown=false;
+lockclass=false;
+victory=false;
+
+/* ########################################## */
+/* ##### Functions start here. They are ##### */
+/* #####  mostly arranged in the order  ##### */
+/* #####   in which they are called.    ##### */
+/* ########################################## */
+
+function playball(){
+  if(!getpuzzle()){grabit('statustd').innerHTML='Failed to understand puzzle.<br><br>'+
+                     'Expected format: wherever.html?width.height|data';return false;}
+  figurenums();
+  writepuzzle();
+}
+
+function getpuzzle(){
+  //i=document.location.href;
+  i = "?21.21|ZJJW5H1IBaHOHrIDFG5g1ZEJS1S0TIsoMekgYMb9pFUOlf1B1ZAub52DIAO5OIOIDw#5QnZDv8"
+  //Expected format: wherever.html?width.height|data
+  //Example:     picross_play.html?8.8|kG6Bne
+  if(                            i.indexOf('?')  ==-1){return false;}
+  if(              i.indexOf('.',i.indexOf('?')) ==-1){return false;}
+  if(i.indexOf('|',i.indexOf('.',i.indexOf('?')))==-1){return false;}
+  if(i.indexOf('?')>(i.length-6)){return false;}
+  i=i.substring(i.indexOf('?')+1,i.length).replace(/\./g,'|');
+  mypuzzle=i.split('|');
+  if(mypuzzle.length!=3){return false;}
+  for(i=0;i<2;i++){mypuzzle[i]=parseInt(mypuzzle[i]);}
+  if(mypuzzle[2].length<Math.floor(mypuzzle[0]*mypuzzle[1]/6+.999)){return false;}
+  //Gotta get me a ceiling function.  I know there is one, I just gotta find it.
+  i=splitevery(mypuzzle[2],1).join(',');
+  i=i.replace(/_/g,'10').replace(/a/g,'11').replace(/b/g,'12').replace(/c/g,'13').replace(/d/g,'14');
+  i=i.replace(/e/g,'15').replace(/f/g,'16').replace(/g/g,'17').replace(/h/g,'18').replace(/i/g,'19');
+  i=i.replace(/j/g,'20').replace(/k/g,'21').replace(/l/g,'22').replace(/m/g,'23').replace(/n/g,'24');
+  i=i.replace(/o/g,'25').replace(/p/g,'26').replace(/q/g,'27').replace(/#/g,'28').replace(/r/g,'29');
+  i=i.replace(/s/g,'30').replace(/t/g,'31').replace(/u/g,'32').replace(/v/g,'33').replace(/w/g,'34');
+  i=i.replace(/x/g,'35').replace(/y/g,'36').replace(/z/g,'37').replace(/A/g,'38').replace(/B/g,'39');
+  i=i.replace(/C/g,'40').replace(/D/g,'41').replace(/E/g,'42').replace(/F/g,'43').replace(/G/g,'44');
+  i=i.replace(/H/g,'45').replace(/I/g,'46').replace(/J/g,'47').replace(/K/g,'48').replace(/L/g,'49');
+  i=i.replace(/M/g,'50').replace(/N/g,'51').replace(/O/g,'52').replace(/P/g,'53').replace(/Q/g,'54');
+  i=i.replace(/R/g,'55').replace(/S/g,'56').replace(/T/g,'57').replace(/U/g,'58').replace(/V/g,'59');
+  i=i.replace(/W/g,'60').replace(/X/g,'61').replace(/Y/g,'62').replace(/Z/g,'63');
+  mypuzzle=mypuzzle.splice(0,2).concat(i.split(','));
+  for(i=0;i<mypuzzle.length;i++){mypuzzle[i]=parseInt(mypuzzle[i]);}
+  for(i=2;i<mypuzzle.length;i++){
+    j='0,0,0,0,0,0'.split(',');
+    if(mypuzzle[i]>=32){j[0]='1';mypuzzle[i]-=32;}if(mypuzzle[i]>=16){j[1]='1';mypuzzle[i]-=16;}
+    if(mypuzzle[i]>= 8){j[2]='1';mypuzzle[i]-= 8;}if(mypuzzle[i]>= 4){j[3]='1';mypuzzle[i]-= 4;}
+    if(mypuzzle[i]>= 2){j[4]='1';mypuzzle[i]-= 2;}if(mypuzzle[i]>= 1){j[5]='1';mypuzzle[i]-= 1;}
+    mypuzzle[i]=j.join('');
+  }
+  mypuzzle[2]=mypuzzle.splice(2,mypuzzle.length).join('');
+  mypuzzle=mypuzzle.slice(0,2).concat(splitevery(mypuzzle[2],mypuzzle[0]));
+  if(mypuzzle[mypuzzle.length-1].length<mypuzzle[0]){mypuzzle=mypuzzle.slice(0,mypuzzle.length-1);}
+  while(mypuzzle.length>mypuzzle[1]+2){mypuzzle=mypuzzle.slice(0,mypuzzle.length-1);}
+  userpuzzle=mypuzzle.slice(0,2).concat(mypuzzle.slice(2,mypuzzle.length).join(',').replace(/1/g,'0').split(','));
+  return true;
+}
+
+function figurenums(){
+  for(i=0;i<mypuzzle[0];i++){
+    tempnum=new Array();tempnum[0]=0;
+    for(j=0;j<mypuzzle[1];j++){
+      if(mypuzzle[j+2].charAt(i)=='1'){tempnum[tempnum.length-1]++;}
+      else if(tempnum[tempnum.length-1]!=0){tempnum[tempnum.length]=0;}
+    }
+    if(tempnum[tempnum.length-1]==0&&tempnum.length>1){tempnum=tempnum.slice(0,tempnum.length-1);}
+    mynums[mynums.length]=tempnum.join(',');
+  }
+  for(i=0;i<mypuzzle[1];i++){
+    tempnum=new Array();tempnum[0]=0;
+    for(j=0;j<mypuzzle[0];j++){
+      if(mypuzzle[i+2].charAt(j)=='1'){tempnum[tempnum.length-1]++;}
+      else if(tempnum[tempnum.length-1]!=0){tempnum[tempnum.length]=0;}
+    }
+    if(tempnum[tempnum.length-1]==0&&tempnum.length>1){tempnum=tempnum.slice(0,tempnum.length-1);}
+    mynums[mynums.length]=tempnum.join(',');
+  }
+  return true;
+}
+
+function writepuzzle(){
+  grabit('statustd').innerHTML='';
+  j='';
+  for(i=0;i<mypuzzle[0];i++){
+    j+='<td class="line_';
+    if(i%5==0&&i!=0)            {j+='l';}
+    if(i%5==4&&i!=mypuzzle[0]-1){j+='r';}
+    j+='"><font class="nostrike" onClick="javascript:changeclass(this);">&nbsp;'+
+       mynums[i].replace(/,/g,'&nbsp;</font><br><font class="nostrike" onClick="javascript:changeclass(this);">&nbsp;')+
+       '&nbsp;</font></td>';
+  }
+  grabit('topnums').innerHTML='<table border="0" cellspacing="0" cellpadding="0"><tr>'+j+'</tr></table>';
+  j='';
+  for(i=0;i<mypuzzle[1];i++){
+    j+='<tr><td class="line_';
+    if(i%5==0&&i!=0)            {j+='t';}
+    if(i%5==4&&i!=mypuzzle[1]-1){j+='b';}
+    j+='"><nobr>&nbsp;<font class="nostrike" onClick="javascript:changeclass(this);">&nbsp;'+
+       mynums[i+mypuzzle[0]].replace(/,/g,'&nbsp;</font>&nbsp;<font class="nostrike" onClick="javascript:changeclass(this);">&nbsp;')+
+       '&nbsp;</font>&nbsp;</nobr></td></tr>';
+  }
+  grabit('sidenums').innerHTML='<table border="0" cellspacing="0" cellpadding="0">'+j+'</table>';
+  //I did topnums and sidenums in three lines each before...but without the blue lines :-(
+  j='<table border="0" cellspacing="0" cellpadding="0">';
+  for(i=0;i<mypuzzle[1];i++){j+='<tr>';for(k=0;k<mypuzzle[0];k++){
+    j+='<td class="line_';
+    if(i%5==0&&i!=0)            {j+='t';}
+    if(i%5==4&&i!=mypuzzle[1]-1){j+='b';}
+    if(k%5==0&&k!=0)            {j+='l';}
+    if(k%5==4&&k!=mypuzzle[0]-1){j+='r';}
+    j+='"><div class="unk" onmousedown="javascript:mouseisdown=true;changeclass(this,\''+i+'\',\''+k+'\');"'+
+         ' onmouseover="javascript:if(mouseisdown){changeclass(this,\''+i+'\',\''+k+'\');}"></div></td>';
+  }j+='</tr>';}
+  grabit('maintds').innerHTML=j;
+}
+
+/* ########################################## */
+/* ##### Mini-section for click & drag ###### */
+/* ########################################## */
+
+function getmouse(e){
+  //This function is not currently used...but it might be, someday.
+  if(!e){e=window.event;}
+  posx=0;posy=0;
+  if(e.pageX||e.pageY){posx=e.pageX;posy=e.pageY;}
+  else if(e.clientX||e.clientY){
+    posx=e.clientX+document.documentElement.scrollLeft;
+    posy=e.clientY+document.documentElement.scrollTop;
+  }
+  alert('X='+posx+' Y='+posy);
+}
+
+function mousegoup(e)  {mouseisdown=false;lockclass=false;}
+function noshift(e)    {trueshiftdown=false;}
+function checkshift(e){
+  if(!e){e=window.event;}
+  if(e.which){
+    if(e.which==16){trueshiftdown=true;}
+    else{trueshiftdown=false;}
+  }
+  if(e.keyCode){
+    if(e.keyCode==16){trueshiftdown=true;}
+    else{trueshiftdown=false;}
+  }
+}
+document.onmouseup=mousegoup;document.onclick=mousegoup;
+document.onkeydown=checkshift;document.onkeyup=noshift;
+
+/* ########################################## */
+/* #### Often-called "functional" funct. #### */
+/* ########################################## */
+
+function grabit(gi_whattograb){
+  if(document.all){return eval("document.all."+gi_whattograb);}
+  if(document.getElementById){return document.getElementById(gi_whattograb);}
+  return false;
+}
+
+function splitevery(se_string,se_num){
+  se_num=parseInt(se_num);
+  if(se_string.length<se_num){return se_string;}
+  se_j=new Array();
+  for(se_i=0;se_i<se_string.length;se_i+=se_num){
+    if(se_string.length>=(se_i+se_num)){se_j[se_j.length]=se_string.substring(se_i,se_i+se_num);}
+    else{se_j[se_j.length]=se_string.substring(se_i,se_string.length);}
+  }
+  return se_j;
+}
+
+function changeclass(cc_what,up_i,up_k){
+  if(victory==true){return true;}
+  if(lockclass==false){shiftdown=trueshiftdown;lockclass=cc_what.className;}
+  if(lockclass!=false){cc_what.className=lockclass;}
+  if(cc_what.className=='unk'&&shiftdown==false){cc_what.className='yes';userchange(1,up_i,up_k);return true;}
+  if(cc_what.className=='yes'&&shiftdown==false){cc_what.className='unk';userchange(0,up_i,up_k);return true;}
+  if(cc_what.className=='no' &&shiftdown==false){cc_what.className='yes';userchange(1,up_i,up_k);return true;}
+  if(cc_what.className=='unk'&&shiftdown==true) {cc_what.className='no'; userchange(0,up_i,up_k);return true;}
+  if(cc_what.className=='yes'&&shiftdown==true) {cc_what.className='no'; userchange(0,up_i,up_k);return true;}
+  if(cc_what.className=='no' &&shiftdown==true) {cc_what.className='unk';userchange(0,up_i,up_k);return true;}
+  if(cc_what.className=='strike')          {cc_what.className='nostrike';                       return true;}
+  if(cc_what.className=='nostrike')        {cc_what.className='strike';                         return true;}
+  else {alert('Unknown class: '+cc_what.className);}
+}
+
+function userchange(up_val,up_i,up_k){
+  up_i=parseInt(up_i)+1;up_k=parseInt(up_k);
+  userpuzzle[up_i+1]=userpuzzle[up_i+1].substring(0,up_k)+up_val.toString()+userpuzzle[up_i+1].substring(up_k+1,userpuzzle[up_i+1].length);
+  if(userpuzzle.join(',')==mypuzzle.join(',')){
+    victory=true;
+    grabit('maintable').className='maintablewin';
+    grabit('victorydiv').style.display='inline';
+    grabit('topnums' ).innerHTML=grabit('topnums' ).innerHTML.replace(/nostrike/g,'strike');
+    grabit('sidenums').innerHTML=grabit('sidenums').innerHTML.replace(/nostrike/g,'strike');
+    grabit('maintds' ).innerHTML=grabit('maintds' ).innerHTML.replace(/unk/g,'no');
+  }
+}
+</script>
+</body></HTML>

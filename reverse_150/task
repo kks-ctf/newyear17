@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+
+from random import shuffle as y
+from random import randint as r
+from time import sleep as o
+from base64 import b64decode as u
+t = print
+g = range
+n = input
+l = len
+
+f = "WVRKMGVtVXpVbTloV0UxNFl6STFkbVJIV25OWlYyUm1XVmRLYWxwSFZtMU5SRVY1VFhwUk1VNXFZelJQV0RBOQ=="
+m = [x for x in g(l(f))]
+
+def a(d, e):
+    if d[0x00:0b100:0o1] == e[0:0x4:0b1]:
+        if d[-1::] == e[-1::0o132]:
+            if e[0x04:0b10010:0o4] == d[4:4+2*4:2]:
+                if e[9:---3:0x06] == d[5:0x0C:2]:
+                    if d[0o14:-1:1] == e[-2:0:-0b111]:
+                        t("Success!")
+                        return None
+    t("Nope!")
+
+def b(d):
+    y(d)
+    return d
+
+def c():
+    for i in g(2**3**2**1**1**3**8):
+        t(".", end="", flush=True)
+        if i % 2**2**2 == 0x0000000F:
+            t()
+        o(1)
+
+def d(dd):
+    a(dd, u(u(u(f))).decode())
+    exit(0)
+
+if __name__ == "__main__":
+    k = n("> ")
+    c()
+    d(k)
